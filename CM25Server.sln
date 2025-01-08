@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CM25Server.WebApi", "CM25Server.WebApi\CM25Server.WebApi.csproj", "{808C0581-7782-4C04-92EF-675733485BF2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CM25Server.Domain", "CM25Server.Domain\CM25Server.Domain.csproj", "{9AA38C7C-0BC4-4BEA-9F75-27C79CA73DE4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CM25Server.Services", "CM25Server.Services\CM25Server.Services.csproj", "{1D4C8E77-65F0-4150-A9CC-26F078B50DEC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{808C0581-7782-4C04-92EF-675733485BF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{808C0581-7782-4C04-92EF-675733485BF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{808C0581-7782-4C04-92EF-675733485BF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{808C0581-7782-4C04-92EF-675733485BF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AA38C7C-0BC4-4BEA-9F75-27C79CA73DE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AA38C7C-0BC4-4BEA-9F75-27C79CA73DE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AA38C7C-0BC4-4BEA-9F75-27C79CA73DE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AA38C7C-0BC4-4BEA-9F75-27C79CA73DE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D4C8E77-65F0-4150-A9CC-26F078B50DEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D4C8E77-65F0-4150-A9CC-26F078B50DEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D4C8E77-65F0-4150-A9CC-26F078B50DEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D4C8E77-65F0-4150-A9CC-26F078B50DEC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
