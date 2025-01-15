@@ -5,10 +5,10 @@ namespace CM25Server.Domain.Models;
 
 public class Issue : BaseModel
 {
-    public required Guid ProjectId { get; init; }
-    public required string Code { get; init; }
-    public required string Name { get; init; }
-    public string Description { get; init; } = string.Empty;
-    public IssuePriority Priority { get; init; } = IssuePriority.Normal;
-    public IssueState State { get; init; } = IssueState.Unresolved;
+    public required string Name { get; set; }
+    public Guid ProjectId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public IssuePriority Priority { get; set; } = IssuePriority.Normal;
+    public IssueState State { get; set; } = IssueState.Unresolved;
 }

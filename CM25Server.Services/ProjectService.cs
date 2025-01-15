@@ -31,7 +31,7 @@ public class ProjectService
         return project;
     }
     
-    public Option<Project> UpdateProject(Guid id, ProjectRequest request)
+    public Result<Project> UpdateProject(Guid id, ProjectRequest request)
     {
         var project = GetProject(id);
 
@@ -44,7 +44,7 @@ public class ProjectService
                 existingProject.Audit.ModifiedOn = DateTime.Now;
                 return existingProject;
             },
-            Option<Project>.None
+            new Result<Project>(new Exception($"Project {id} does not exist."))
         );
     }
 
@@ -64,4 +64,6 @@ public class ProjectService
         _projects.AddRange(projects);
         return count;
     }
+    
+    public Result<int> ClearProjects() => _projects.RemoveAll(x => true);
 }

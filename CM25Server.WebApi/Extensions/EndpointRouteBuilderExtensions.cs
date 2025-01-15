@@ -9,7 +9,8 @@ public static class EndpointRouteBuilderExtensions
         ApiVersionManager apiVersionManager)
     {
         endpoints
-            .MapProjectEndpoints(apiVersionManager);
+            .MapProjectEndpoints(apiVersionManager)
+            .MapIssueEndpoints(apiVersionManager);
 
         return endpoints;
     }

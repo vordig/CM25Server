@@ -13,6 +13,7 @@ public static class ProjectEndpoints
     private const string UpdateProjectEndpointName = "UpdateProject";
     private const string DeleteProjectEndpointName = "DeleteProject";
     private const string GenerateProjectsEndpointName = "GenerateProjects";
+    private const string ClearProjectsEndpointName = "ClearProjects";
 
     public static IEndpointRouteBuilder MapProjectEndpoints(this IEndpointRouteBuilder endpoints,
         ApiVersionManager apiVersionManager)
@@ -52,8 +53,13 @@ public static class ProjectEndpoints
             .Produces<bool>();
         
         api
-            .MapGet("generate/{count:int}", GenerateProjectsAsync)
+            .MapPost("generate/{count:int}", GenerateProjectsAsync)
             .WithName(GenerateProjectsEndpointName)
+            .Produces<int>();
+        
+        api
+            .MapDelete("all", ClearProjectsAsync)
+            .WithName(ClearProjectsEndpointName)
             .Produces<int>();
     }
 
@@ -83,7 +89,7 @@ public static class ProjectEndpoints
 
         return result.Match(
             Results.Ok,
-            _ => Results.InternalServerError()
+            Results.InternalServerError
         );
     }
     
@@ -93,7 +99,7 @@ public static class ProjectEndpoints
 
         return result.Match(
             Results.Ok,
-            Results.NotFound()
+            Results.InternalServerError
         );
     }
     
@@ -103,7 +109,7 @@ public static class ProjectEndpoints
 
         return result.Match(
             Results.Ok,
-            _ => Results.InternalServerError()
+            Results.InternalServerError
         );
     }
     
@@ -113,7 +119,17 @@ public static class ProjectEndpoints
 
         return result.Match(
             Results.Ok,
-            _ => Results.NotFound()
+            Results.InternalServerError
+        );
+    }
+    
+    private static IResult ClearProjectsAsync(ProjectService projectService, CancellationToken cancellationToken)
+    {
+        var result = projectService.ClearProjects();
+
+        return result.Match(
+            Results.Ok,
+            Results.InternalServerError
         );
     }
 }
