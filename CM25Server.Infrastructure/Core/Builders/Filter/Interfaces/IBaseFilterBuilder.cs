@@ -1,6 +1,6 @@
 using MongoDB.Driver;
 
-namespace CM25Server.Infrastructure.Builders.Filter.Interfaces;
+namespace CM25Server.Infrastructure.Core.Builders.Filter.Interfaces;
 
 public interface IBaseFilterBuilder<T>
 {

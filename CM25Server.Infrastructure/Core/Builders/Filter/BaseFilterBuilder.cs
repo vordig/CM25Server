@@ -1,7 +1,7 @@
-using CM25Server.Infrastructure.Builders.Filter.Interfaces;
+using CM25Server.Infrastructure.Core.Builders.Filter.Interfaces;
 using MongoDB.Driver;
 
-namespace CM25Server.Infrastructure.Builders.Filter;
+namespace CM25Server.Infrastructure.Core.Builders.Filter;
 
 public abstract class BaseFilterBuilder<T, TFilterBuilder> : IBaseFilterBuilder<T>
     where TFilterBuilder : BaseFilterBuilder<T, TFilterBuilder>

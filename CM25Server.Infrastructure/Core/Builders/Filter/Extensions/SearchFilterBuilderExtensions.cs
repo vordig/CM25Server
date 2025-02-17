@@ -1,7 +1,7 @@
-using CM25Server.Infrastructure.Builders.Filter.Interfaces;
+using CM25Server.Infrastructure.Core.Builders.Filter.Interfaces;
 using MongoDB.Bson;
 
-namespace CM25Server.Infrastructure.Builders.Filter.Extensions;
+namespace CM25Server.Infrastructure.Core.Builders.Filter.Extensions;
 
 public static class SearchFilterBuilderExtensions
 {

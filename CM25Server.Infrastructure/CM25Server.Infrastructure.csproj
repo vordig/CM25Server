@@ -15,4 +15,8 @@
       <ProjectReference Include="..\CM25Server.Domain\CM25Server.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Builders\Update\" />
+    </ItemGroup>
+
 </Project>
