@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using CM25Server.Infrastructure.Core.Options;
 using CM25Server.WebApi.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -216,32 +217,25 @@ internal static class OpenApiOptionsExtensions
         public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context,
             CancellationToken cancellationToken)
         {
-            var identitySection = configuration.GetSection("Identity");
-            if (!identitySection.Exists())
+            var authOptionsSection = configuration.GetSection(AuthOptions.SectionName);
+            if (!authOptionsSection.Exists())
             {
                 return Task.CompletedTask;
             }
 
-            var identityUrlExternal = identitySection.GetRequiredValue("Url");
-            var scopes = identitySection.GetRequiredSection("Scopes").GetChildren()
-                .ToDictionary(p => p.Key, p => p.Value);
             var securityScheme = new OpenApiSecurityScheme
             {
-                Type = SecuritySchemeType.OAuth2,
-                Flows = new OpenApiOAuthFlows()
-                {
-                    // TODO: Change this to use Authorization Code flow with PKCE
-                    Implicit = new OpenApiOAuthFlow()
-                    {
-                        AuthorizationUrl = new Uri($"{identityUrlExternal}/connect/authorize"),
-                        TokenUrl = new Uri($"{identityUrlExternal}/connect/token"),
-                        Scopes = scopes,
-                    }
-                }
+                Description =
+                    "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer",
+                BearerFormat = "JWT"
             };
 
             document.Components ??= new OpenApiComponents();
-            document.Components.SecuritySchemes.Add("oauth2", securityScheme);
+            document.Components.SecuritySchemes.Add("Bearer", securityScheme);
             return Task.CompletedTask;
         }
     }

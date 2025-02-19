@@ -3,6 +3,7 @@ using Bogus;
 using CM25Server.Domain.Enums;
 using CM25Server.Domain.Models;
 using CM25Server.Services.Contracts;
+using CM25Server.Services.Contracts.Requests;
 using LanguageExt;
 using LanguageExt.Common;
 
@@ -25,25 +26,27 @@ public class IssueService(ProjectService projectService)
 
     public Result<Issue> CreateIssue(IssueRequest request, Guid projectId)
     {
-        var project = projectService.GetProject(projectId);
-
-        return project.Match(
-            existingProject =>
-            {
-                var issue = new Issue
-                {
-                    ProjectId = existingProject.Id,
-                    Code = $"{existingProject.Code}-{existingProject.IssueCounter++}",
-                    Name = request.Name,
-                    Description = request.Description,
-                    Priority = request.Priority,
-                    State = IssueState.Unresolved,
-                };
-                _issues.Add(issue);
-                return issue;
-            },
-            new Result<Issue>(new Exception($"Project {projectId} does not exist."))
-        );
+        throw new NotImplementedException();
+        
+        // var project = projectService.GetProjectAsync(projectId);
+        //
+        // return project.Match(
+        //     existingProject =>
+        //     {
+        //         var issue = new Issue
+        //         {
+        //             ProjectId = existingProject.Id,
+        //             Code = $"{existingProject.Code}-{existingProject.IssueCounter++}",
+        //             Name = request.Name,
+        //             Description = request.Description,
+        //             Priority = request.Priority,
+        //             State = IssueState.Unresolved,
+        //         };
+        //         _issues.Add(issue);
+        //         return issue;
+        //     },
+        //     new Result<Issue>(new Exception($"Project {projectId} does not exist."))
+        // );
     }
 
     public Result<Issue> UpdateIssue(Guid id, IssueRequest request, Guid projectId)
@@ -76,24 +79,26 @@ public class IssueService(ProjectService projectService)
 
     public Result<int> GenerateIssues(int count, Guid projectId)
     {
-        var project = projectService.GetProject(projectId);
-
-        return project.Match(
-            existingProject =>
-            {
-                var issues = _issueGenerator.Generate(count);
-
-                foreach (var issue in issues)
-                {
-                    issue.ProjectId = existingProject.Id;
-                    issue.Code = $"{existingProject.Code}-{existingProject.IssueCounter++}";
-                }
-
-                _issues.AddRange(issues);
-                return count;
-            },
-            new Result<int>(new Exception($"Project {projectId} does not exist."))
-        );
+        throw new NotImplementedException();
+        
+        // var project = projectService.GetProjectAsync(projectId);
+        //
+        // return project.Match(
+        //     existingProject =>
+        //     {
+        //         var issues = _issueGenerator.Generate(count);
+        //
+        //         foreach (var issue in issues)
+        //         {
+        //             issue.ProjectId = existingProject.Id;
+        //             issue.Code = $"{existingProject.Code}-{existingProject.IssueCounter++}";
+        //         }
+        //
+        //         _issues.AddRange(issues);
+        //         return count;
+        //     },
+        //     new Result<int>(new Exception($"Project {projectId} does not exist."))
+        // );
     }
 
     public Result<int> ClearIssues(Guid projectId) => _issues.RemoveAll(x => x.ProjectId == projectId);
