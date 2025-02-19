@@ -9,7 +9,7 @@ public static class SortingDataSortBuilderExtensions
         SortingData<TSortBy> sortingData) where TSortBy : struct, Enum
     {
         var sortFieldExpression = builder.GetSortFieldExpression(sortingData.SortBy);
-        var sort = sortingData.SortDirection == SortDirection.Ascending
+        var sort = sortingData.SortDirection == SortDirection.Asc
             ? builder.Builder.Ascending(sortFieldExpression)
             : builder.Builder.Descending(sortFieldExpression);
 
