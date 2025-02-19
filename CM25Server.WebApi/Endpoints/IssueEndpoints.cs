@@ -1,6 +1,7 @@
 using CM25Server.Domain.Models;
 using CM25Server.Services;
 using CM25Server.Services.Contracts;
+using CM25Server.Services.Contracts.Requests;
 using CM25Server.WebApi.ApiVersioning;
 
 namespace CM25Server.WebApi.Endpoints;

@@ -1,0 +1,20 @@
+name: cm25-server-infrastructure
+
+services:
+  mongodb:
+    image: mongo:6.0.3
+    container_name: cm25server.mongodb
+    volumes:
+      - cm25server_mongo_volume:/data/db
+    networks:
+      - cm25server_network
+    ports:
+      - "20001:27017"
+        
+volumes:
+  cm25server_mongo_volume:
+    external: false
+
+networks:
+  cm25server_network:
+    name: cm25server_network

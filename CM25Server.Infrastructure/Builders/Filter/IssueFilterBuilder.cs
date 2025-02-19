@@ -5,8 +5,8 @@ using CM25Server.Infrastructure.Core.Builders.Filter.Interfaces;
 
 namespace CM25Server.Infrastructure.Builders.Filter;
 
-public class IssueFilterBuilder : BaseFilterBuilder<Issue, IssueFilterBuilder>, IIdFilterBuilder<Issue>,
-    ISearchFilterBuilder<Issue>
+public class IssueFilterBuilder : BaseFilterBuilder<Issue, IssueFilterBuilder>,
+    IIdFilterBuilder<Issue, IssueFilterBuilder>, ISearchFilterBuilder<Issue, IssueFilterBuilder>
 {
     public IReadOnlyCollection<Expression<Func<Issue, object>>> SearchFields =>
     [

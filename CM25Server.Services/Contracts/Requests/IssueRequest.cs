@@ -1,6 +1,6 @@
 using CM25Server.Domain.Enums;
 
-namespace CM25Server.Services.Contracts;
+namespace CM25Server.Services.Contracts.Requests;
 
 public record IssueRequest
 {

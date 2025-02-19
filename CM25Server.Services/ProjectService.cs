@@ -1,69 +1,132 @@
-﻿using System.Collections.Immutable;
-using Bogus;
-using CM25Server.Domain.Models;
-using CM25Server.Services.Contracts;
+﻿using CM25Server.Domain.Commands;
+using CM25Server.Infrastructure.Core.Data;
+using CM25Server.Infrastructure.Data;
+using CM25Server.Infrastructure.Enums;
+using CM25Server.Infrastructure.Repositories;
+using CM25Server.Services.Contracts.Responses;
+using CM25Server.Services.Core;
+using CM25Server.Services.Mappers;
 using LanguageExt;
 using LanguageExt.Common;
+using Microsoft.Extensions.Logging;
 
 namespace CM25Server.Services;
 
-public class ProjectService
+public class ProjectService(ProjectRepository projectRepository, ILogger<ProjectService> logger)
 {
-    private readonly List<Project> _projects = [];
-
-    private readonly Faker<Project> _projectGenerator = new Faker<Project>("ru")
-        .RuleFor(p => p.Name, f => f.Company.CompanyName())
-        .RuleFor(p => p.Description, f => f.Company.Bs())
-        .RuleFor(p => p.Code, (f, p) => p.Name[..2].ToUpper());
-    
-    public Result<IImmutableList<Project>> GetProjects() => _projects.ToImmutableList();
-    public Option<Project> GetProject(Guid id) => _projects.SingleOrDefault(x => x.Id == id);
-    
-    public Result<Project> CreateProject(ProjectRequest request)
+    public async Task<Result<ProjectResponse>> CreateProjectAsync(CreateProjectCommand command, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var project = new Project
-        {
-            Name = request.Name,
-            Description = request.Description,
-            Code = request.Code
-        };
-        _projects.Add(project);
-        return project;
-    }
-    
-    public Result<Project> UpdateProject(Guid id, ProjectRequest request)
-    {
-        var project = GetProject(id);
-
-        return project.Match(
-            existingProject =>
+        logger.LogInformation("CreateProjectAsync requested by {UserId}", userId);
+        
+        // todo: add validator
+        
+        var result = await projectRepository.CreateProjectAsync(command, cancellationToken);
+        return result.Match(
+            createdProject =>
             {
-                existingProject.Name = request.Name;
-                existingProject.Description = request.Description;
-                existingProject.Code = request.Code;
-                existingProject.Audit.ModifiedOn = DateTime.Now;
-                return existingProject;
+                logger.LogInformation("Project {Name} with Id {ProjectId} created", createdProject.Name,
+                    createdProject.Id);
+                var mapper = new ProjectMapper();
+                return mapper.ToResponse(createdProject);
             },
-            new Result<Project>(new Exception($"Project {id} does not exist."))
+            exception =>
+            {
+                logger.LogError(exception, "Project {Name} not created", command.Name);
+                return new Result<ProjectResponse>(exception);
+            }
         );
     }
 
-    public Result<bool> DeleteProject(Guid id)
+    public async Task<Option<ProjectResponse>> GetProjectAsync(Guid projectId, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var project = GetProject(id);
+        logger.LogInformation("GetProjectAsync requested by {UserId}", userId);
+        
+        var projectResult = await projectRepository.GetProjectAsync(projectId, cancellationToken);
 
-        return project.Match(
-            _projects.Remove,
-            false
+        return projectResult.Match(
+            project =>
+            {
+                var mapper = new ProjectMapper();
+                return mapper.ToResponse(project);
+            },
+            Option<ProjectResponse>.None
         );
     }
-    
-    public Result<int> GenerateProjects(int count)
+
+    public async Task<Result<PageResponse<ProjectResponse>>> GetProjectsAsync(ProjectFilteringData filteringData,
+        SortingData<ProjectSortBy> sortingData, PagingData pagingData, Guid userId, CancellationToken cancellationToken)
     {
-        var projects = _projectGenerator.Generate(count);
-        _projects.AddRange(projects);
-        return count;
+        logger.LogInformation("GetProjectsAsync requested by {UserId}", userId);
+        
+        var itemsTask = projectRepository.GetProjectsAsync(filteringData, sortingData, pagingData, cancellationToken);
+        var itemsCountTask = projectRepository.CountAsync(filteringData, cancellationToken);
+
+        await Task.WhenAll(itemsTask, itemsCountTask);
+
+        var items = itemsTask.Result.IfNone([]);
+        var itemsCount = itemsCountTask.Result.IfFail(0);
+
+        var mapper = new ProjectMapper();
+        var itemsResponse = items.Select(mapper.ToResponse).ToArray();
+
+        var result = new PageResponse<ProjectResponse>
+        {
+            Items = itemsResponse,
+            Total = itemsCount,
+            PageNumber = pagingData.PageNumber,
+            PageSize = pagingData.PageSize
+        };
+
+        return result;
     }
-    
-    public Result<int> ClearProjects() => _projects.RemoveAll(x => true);
+
+    public async Task<Result<Guid>> UpdateProjectAsync(Guid projectId, UpdateProjectCommand command, Guid userId,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("UpdateProjectAsync requested by {UserId}", userId);
+        
+        // todo: add validator
+
+        var result = await projectRepository.UpdateProjectAsync(projectId, command, cancellationToken);
+        return result.Match(
+            updatedProjectId =>
+            {
+                logger.LogInformation("Project {ProjectId} updated", updatedProjectId);
+                return updatedProjectId;
+            },
+            exception =>
+            {
+                logger.LogError(exception, "Project {ProjectId} not updated", projectId);
+                return new Result<Guid>(exception);
+            }
+        );
+    }
+
+    public async Task<Result<bool>> AnyProjectAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("AnyProjectAsync requested by {UserId}", userId);
+        return await projectRepository.AnyAsync(cancellationToken);
+    }
+
+    public async Task<Result<Guid>> DeleteProjectAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("DeleteProjectAsync requested by {UserId}", userId);
+        
+        var result = await projectRepository.DeleteProjectAsync(projectId, cancellationToken);
+
+        return result.Match(
+            updatedProjectId =>
+            {
+                logger.LogInformation("Project {ProjectId} deleted", updatedProjectId);
+                return updatedProjectId;
+            },
+            exception =>
+            {
+                logger.LogError(exception, "Project {ProjectId} not deleted", projectId);
+                return new Result<Guid>(exception);
+            }
+        );
+    }
 }

@@ -5,7 +5,7 @@ namespace CM25Server.Infrastructure.Core.Builders.Filter.Extensions;
 
 public static class SearchFilterBuilderExtensions
 {
-    public static TBuilder SearchFor<T, TBuilder>(this ISearchFilterBuilder<T> builder, string? searchTerm)
+    public static TBuilder SearchFor<T, TBuilder>(this ISearchFilterBuilder<T, TBuilder> builder, string? searchTerm)
     {
         if (string.IsNullOrEmpty(searchTerm))
             return (TBuilder)builder;

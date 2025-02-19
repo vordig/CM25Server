@@ -5,7 +5,7 @@ namespace CM25Server.Infrastructure.Core.Builders.Sort.Extensions;
 
 public static class SortingDataSortBuilderExtensions
 {
-    public static TBuilder SortBy<T, TSortBy, TBuilder>(this ISortingDataSortBuilder<T, TSortBy> builder,
+    public static TBuilder SortBy<T, TSortBy, TBuilder>(this ISortingDataSortBuilder<T, TSortBy, TBuilder> builder,
         SortingData<TSortBy> sortingData) where TSortBy : struct, Enum
     {
         var sortFieldExpression = builder.GetSortFieldExpression(sortingData.SortBy);

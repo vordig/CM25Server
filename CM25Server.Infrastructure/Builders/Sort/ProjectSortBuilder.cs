@@ -8,7 +8,7 @@ using MongoDB.Driver;
 namespace CM25Server.Infrastructure.Builders.Sort;
 
 public class ProjectSortBuilder : BaseSortBuilder<Project, ProjectSortBuilder>,
-    ISortingDataSortBuilder<Project, ProjectSortBy>
+    ISortingDataSortBuilder<Project, ProjectSortBy, ProjectSortBuilder>
 {
     protected override SortDefinition<Project> DefaultSort => Builder.Ascending(x => x.Name);
     
