@@ -7,6 +7,7 @@ using CM25Server.Services;
 using CM25Server.WebApi.ApiVersioning;
 using CM25Server.WebApi.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using Serilog;
@@ -61,7 +62,9 @@ static void RunApplication(string[] args)
 
     builder.Services.AddScoped<DatabaseContext>();
 
+    builder.Services.AddScoped<UserRepository>();
     builder.Services.AddScoped<ProjectRepository>();
+    builder.Services.AddScoped<IssueRepository>();
 
     builder.Services.AddScoped<AuthService>();
     builder.Services.AddScoped<ProjectService>();
@@ -93,6 +96,21 @@ static void RunApplication(string[] args)
         };
     });
     builder.Services.AddAuthorization();
+
+    builder.Services.AddProblemDetails(options =>
+    {
+        options.CustomizeProblemDetails = context =>
+        {
+            var apiVersion = context.HttpContext.GetRequestedApiVersion()?.ToString("'v'VVVV") ?? "Neutral";
+            context.ProblemDetails.Instance =
+                $"HTTP {context.HttpContext.Request.Method} {context.HttpContext.Request.Path} version {apiVersion}";
+            
+            context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+            
+            var activity = context.HttpContext.Features.Get<IHttpActivityFeature>()?.Activity;
+            context.ProblemDetails.Extensions.TryAdd("traceId", activity?.Id);
+        };
+    });
 
     DatabaseConfiguration.Configure();
 

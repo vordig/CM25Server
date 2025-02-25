@@ -1,7 +1,7 @@
 using System.Reflection;
 using CM25Server.Infrastructure.Core.Data;
 
-namespace CM25Server.WebApi.Data;
+namespace CM25Server.WebApi.BindableData;
 
 public record BindableSortingData<TEnum>(TEnum SortBy, SortDirection SortDirection) :
     SortingData<TEnum>(SortBy, SortDirection) where TEnum : struct, Enum

@@ -2,6 +2,6 @@
 
 public enum IssueState
 {
-    Unresolved,
-    Resolved
+    Open,
+    Closed
 }

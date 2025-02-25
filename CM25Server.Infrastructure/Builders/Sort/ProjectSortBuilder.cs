@@ -18,7 +18,8 @@ public class ProjectSortBuilder : BaseSortBuilder<Project, ProjectSortBuilder>,
         {
             ProjectSortBy.Name => x => x.Name,
             ProjectSortBy.Code => x => x.Code,
-            ProjectSortBy.Updated => x => x.Audit.ModifiedOn,
+            ProjectSortBy.CreatedOn => x => x.Audit.CreatedOn,
+            ProjectSortBy.ModifiedOn => x => x.Audit.ModifiedOn,
             _ => throw new ArgumentOutOfRangeException(nameof(sortBy), sortBy, null)
         };
     }

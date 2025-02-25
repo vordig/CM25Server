@@ -4,5 +4,6 @@ public enum ProjectSortBy
 {
     Name,
     Code,
-    Updated
+    CreatedOn,
+    ModifiedOn
 }

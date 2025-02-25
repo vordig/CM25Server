@@ -1,23 +1,18 @@
-﻿using CM25Server.Domain.Commands;
+﻿using CM25Server.Domain.Commands.Extended;
+using CM25Server.Domain.Commands.Mappers;
 using CM25Server.Domain.Core;
 
 namespace CM25Server.Domain.Models;
 
-public class Project : BaseModel
+public class Project : BaseOwnedByUserModel
 {
     public required string Code { get; set; }
     public required string Name { get; set; }
     public string Description { get; set; } = string.Empty;
-    public int IssueCounter { get; set; } = 0;
 
-    public static Project FromCommand(CreateProjectCommand command)
+    public static Project FromCommand(CreateProjectExtendedCommand command)
     {
-        var result = new Project
-        {
-            Name = command.Name,
-            Description = command.Description,
-            Code = command.Code
-        };
-        return result;
+        var mapper = new CreateProjectExtendedCommandMapper();
+        return mapper.ToProject(command);
     }
 }
