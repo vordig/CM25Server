@@ -64,6 +64,7 @@ static void RunApplication(string[] args)
 
     builder.Services.AddScoped<UserRepository>();
     builder.Services.AddScoped<ProjectRepository>();
+    builder.Services.AddScoped<IssueRepository>();
 
     builder.Services.AddScoped<AuthService>();
     builder.Services.AddScoped<ProjectService>();

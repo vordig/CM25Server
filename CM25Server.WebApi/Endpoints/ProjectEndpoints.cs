@@ -1,7 +1,7 @@
 ﻿using CM25Server.Domain.Commands;
 using CM25Server.Infrastructure.Enums;
 using CM25Server.Services;
-using CM25Server.Services.Contracts.Responses;
+using CM25Server.Services.Contracts;
 using CM25Server.Services.Core;
 using CM25Server.WebApi.ApiVersioning;
 using CM25Server.WebApi.BindableData;
@@ -40,19 +40,19 @@ public static class ProjectEndpoints
             .MapGet("", GetProjectsAsync)
             .WithName(GetProjectsEndpointName)
             .RequireAuthorization()
-            .Produces<PageResponse<ProjectResponse>>();
+            .Produces<PageResponse<ProjectListResponse>>();
 
         api
             .MapGet("{id:guid}", GetProjectAsync)
             .WithName(GetProjectEndpointName)
             .RequireAuthorization()
-            .Produces<ProjectResponse>();
+            .Produces<ProjectListResponse>();
 
         api
             .MapPost("", CreateProjectAsync)
             .WithName(CreateProjectEndpointName)
             .RequireAuthorization()
-            .Produces<ProjectResponse>();
+            .Produces<ProjectListResponse>();
 
         api
             .MapPut("{id:guid}", UpdateProjectAsync)

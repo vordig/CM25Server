@@ -1,105 +1,162 @@
-﻿using System.Collections.Immutable;
-using Bogus;
-using CM25Server.Domain.Enums;
-using CM25Server.Domain.Models;
+﻿using CM25Server.Domain.Commands;
+using CM25Server.Domain.Commands.Extended;
+using CM25Server.Domain.Exceptions;
+using CM25Server.Infrastructure.Core.Data;
+using CM25Server.Infrastructure.Data;
+using CM25Server.Infrastructure.Enums;
+using CM25Server.Infrastructure.Repositories;
 using CM25Server.Services.Contracts;
-using CM25Server.Services.Contracts.Requests;
+using CM25Server.Services.Core;
+using CM25Server.Services.Mappers;
 using LanguageExt;
 using LanguageExt.Common;
+using Microsoft.Extensions.Logging;
 
 namespace CM25Server.Services;
 
-public class IssueService(ProjectService projectService)
+public class IssueService(
+    ProjectRepository projectRepository,
+    IssueRepository issueRepository,
+    ILogger<IssueService> logger)
 {
-    private readonly List<Issue> _issues = [];
-
-    private readonly Faker<Issue> _issueGenerator = new Faker<Issue>("ru")
-        .RuleFor(p => p.Name, f => f.Commerce.Product())
-        .RuleFor(p => p.Description, (f, i) => f.Rant.Review(i.Name))
-        .RuleFor(p => p.Priority, f => f.PickRandom<IssuePriority>());
-
-    public Result<IImmutableList<Issue>> GetIssues(Guid projectId) =>
-        _issues.Where(x => x.ProjectId == projectId).ToImmutableList();
-
-    public Option<Issue> GetIssue(Guid id, Guid projectId) =>
-        _issues.SingleOrDefault(x => x.Id == id && x.ProjectId == projectId);
-
-    public Result<Issue> CreateIssue(IssueRequest request, Guid projectId)
+    public async Task<Result<IssueListResponse>> CreateIssueAsync(CreateIssueCommand command, Guid projectId,
+        Guid userId, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-        
-        // var project = projectService.GetProjectAsync(projectId);
-        //
-        // return project.Match(
-        //     existingProject =>
-        //     {
-        //         var issue = new Issue
-        //         {
-        //             ProjectId = existingProject.Id,
-        //             Code = $"{existingProject.Code}-{existingProject.IssueCounter++}",
-        //             Name = request.Name,
-        //             Description = request.Description,
-        //             Priority = request.Priority,
-        //             State = IssueState.Unresolved,
-        //         };
-        //         _issues.Add(issue);
-        //         return issue;
-        //     },
-        //     new Result<Issue>(new Exception($"Project {projectId} does not exist."))
-        // );
+        var commandValidationResult = await command.ValidateAsync(cancellationToken);
+        return await commandValidationResult.Match(
+            async validatedCommand =>
+                await ValidatedCreateIssueAsync(validatedCommand, projectId, userId, cancellationToken),
+            exception => Task.FromResult(new Result<IssueListResponse>(exception))
+        );
     }
 
-    public Result<Issue> UpdateIssue(Guid id, IssueRequest request, Guid projectId)
+    public async Task<Option<IssueDetailResponse>> GetIssueAsync(Guid issueId, Guid projectId, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var issue = GetIssue(id, projectId);
+        var issueResult = await issueRepository.GetIssueAsync(issueId, projectId, userId, cancellationToken);
 
-        return issue.Match(
-            existingIssue =>
+        return issueResult.Match(
+            issue =>
             {
-                existingIssue.Name = request.Name;
-                existingIssue.Description = request.Description;
-                existingIssue.Priority = request.Priority;
-                existingIssue.State = request.State;
-                existingIssue.Audit.ModifiedOn = DateTime.Now;
-                return existingIssue;
+                var mapper = new IssueMapper();
+                return mapper.ToDetailResponse(issue);
             },
-            new Result<Issue>(new Exception($"Issue {id} for Project {projectId} does not exist."))
+            Option<IssueDetailResponse>.None
         );
     }
 
-    public Result<bool> DeleteIssue(Guid id, Guid projectId)
+    public async Task<Result<PageResponse<IssueListResponse>>> GetIssuesAsync(IssueFilteringData filteringData,
+        SortingData<IssueSortBy> sortingData, PagingData pagingData, Guid projectId, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var issue = GetIssue(id, projectId);
+        var itemsTask = issueRepository.GetIssuesAsync(filteringData, sortingData, pagingData, projectId, userId,
+            cancellationToken);
+        var itemsCountTask = issueRepository.CountAsync(filteringData, projectId, userId, cancellationToken);
 
-        return issue.Match(
-            _issues.Remove,
-            false
+        await Task.WhenAll(itemsTask, itemsCountTask);
+
+        var items = itemsTask.Result.IfNone([]);
+        var itemsCount = itemsCountTask.Result.IfFail(0);
+
+        var mapper = new IssueMapper();
+        var itemsResponse = items.Select(mapper.ToListResponse).ToArray();
+
+        var result = new PageResponse<IssueListResponse>
+        {
+            Items = itemsResponse,
+            Total = itemsCount,
+            PageNumber = pagingData.PageNumber,
+            PageSize = pagingData.PageSize
+        };
+
+        return result;
+    }
+
+    public async Task<Result<Guid>> UpdateIssueAsync(Guid issueId, UpdateIssueCommand command, Guid projectId,
+        Guid userId, CancellationToken cancellationToken)
+    {
+        var commandValidationResult = await command.ValidateAsync(cancellationToken);
+        return await commandValidationResult.Match(
+            async validatedCommand =>
+                await ValidatedUpdateIssueAsync(issueId, validatedCommand, projectId, userId, cancellationToken),
+            exception => Task.FromResult(new Result<Guid>(exception))
         );
     }
 
-    public Result<int> GenerateIssues(int count, Guid projectId)
+    public async Task<Result<bool>> AnyIssueAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-        
-        // var project = projectService.GetProjectAsync(projectId);
-        //
-        // return project.Match(
-        //     existingProject =>
-        //     {
-        //         var issues = _issueGenerator.Generate(count);
-        //
-        //         foreach (var issue in issues)
-        //         {
-        //             issue.ProjectId = existingProject.Id;
-        //             issue.Code = $"{existingProject.Code}-{existingProject.IssueCounter++}";
-        //         }
-        //
-        //         _issues.AddRange(issues);
-        //         return count;
-        //     },
-        //     new Result<int>(new Exception($"Project {projectId} does not exist."))
-        // );
+        return await issueRepository.AnyAsync(projectId, userId, cancellationToken);
     }
 
-    public Result<int> ClearIssues(Guid projectId) => _issues.RemoveAll(x => x.ProjectId == projectId);
+    public async Task<Result<Guid>> DeleteIssueAsync(Guid issueId, Guid projectId, Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await issueRepository.DeleteIssueAsync(issueId, projectId, userId, cancellationToken);
+
+        return result.Match(
+            updatedIssueId =>
+            {
+                logger.LogInformation("Issue {IssueId} deleted", updatedIssueId);
+                return updatedIssueId;
+            },
+            exception =>
+            {
+                logger.LogError(exception, "Issue {IssueId} not deleted", issueId);
+                return new Result<Guid>(exception);
+            }
+        );
+    }
+
+    private async Task<Result<IssueListResponse>> ValidatedCreateIssueAsync(CreateIssueCommand command, Guid projectId,
+        Guid userId, CancellationToken cancellationToken)
+    {
+        var projectResult = await projectRepository.GetProjectAsync(projectId, userId, cancellationToken);
+        return await projectResult.MatchAsync(async project =>
+            {
+                var code = project.Code;
+                var extendedCommand = command.Extend(code, projectId, userId);
+                return await CreateIssueAsync(extendedCommand, cancellationToken);
+            },
+            () => new Result<IssueListResponse>(new ProblemException("Project not found", "Project not found"))
+        );
+    }
+
+    private async Task<Result<IssueListResponse>> CreateIssueAsync(CreateIssueExtendedCommand command,
+        CancellationToken cancellationToken)
+    {
+        var result = await issueRepository.CreateIssueAsync(command, cancellationToken);
+        return result.Match(
+            createdIssue =>
+            {
+                logger.LogInformation("Issue {Name} with Id {IssueId} created", createdIssue.Name,
+                    createdIssue.Id);
+                var mapper = new IssueMapper();
+                return mapper.ToListResponse(createdIssue);
+            },
+            exception =>
+            {
+                logger.LogError(exception, "Issue {Name} not created", command.Name);
+                return new Result<IssueListResponse>(exception);
+            }
+        );
+    }
+
+    private async Task<Result<Guid>> ValidatedUpdateIssueAsync(Guid issueId, UpdateIssueCommand command,
+        Guid projectId, Guid userId, CancellationToken cancellationToken)
+    {
+        var extendedCommand = command.Extend(issueId, projectId, userId);
+        var result = await issueRepository.UpdateIssueAsync(extendedCommand, cancellationToken);
+        return result.Match(
+            updatedIssueId =>
+            {
+                logger.LogInformation("Issue {IssueId} updated", updatedIssueId);
+                return updatedIssueId;
+            },
+            exception =>
+            {
+                logger.LogError(exception, "Issue {IssueId} not updated", issueId);
+                return new Result<Guid>(exception);
+            }
+        );
+    }
 }

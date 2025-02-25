@@ -1,5 +1,5 @@
 using CM25Server.Domain.Models;
-using CM25Server.Services.Contracts.Responses;
+using CM25Server.Services.Contracts;
 using Riok.Mapperly.Abstractions;
 
 namespace CM25Server.Services.Mappers;
@@ -8,5 +8,8 @@ namespace CM25Server.Services.Mappers;
 public partial class ProjectMapper
 {
     [MapNestedProperties(nameof(Project.Audit))]
-    public partial ProjectResponse ToResponse(Project project);
+    public partial ProjectListResponse ToListResponse(Project project);
+    
+    [MapNestedProperties(nameof(Project.Audit))]
+    public partial ProjectDetailResponse ToDetailResponse(Project project);
 }

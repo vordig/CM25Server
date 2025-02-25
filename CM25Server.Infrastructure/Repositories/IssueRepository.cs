@@ -1,5 +1,4 @@
-using CM25Server.Domain.Commands;
-using CM25Server.Domain.Commands.Extended;
+﻿using CM25Server.Domain.Commands.Extended;
 using CM25Server.Domain.Models;
 using CM25Server.Infrastructure.Builders.Filter;
 using CM25Server.Infrastructure.Builders.Sort;
@@ -18,13 +17,14 @@ using Microsoft.Extensions.Logging;
 
 namespace CM25Server.Infrastructure.Repositories;
 
-public class ProjectRepository(DatabaseContext databaseContext, ILogger<ProjectRepository> logger)
-    : BaseDatabaseRepository(databaseContext, "projects", logger)
+public class IssueRepository(DatabaseContext databaseContext, ILogger<IssueRepository> logger)
+    : BaseDatabaseRepository(databaseContext, "issues", logger)
 {
-    public async Task<Result<bool>> AnyAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<Result<bool>> AnyAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
     {
-        var filter = new ProjectFilterBuilder()
+        var filter = new IssueFilterBuilder()
             .OwnedByUser(userId)
+            .ForProject(projectId)
             .Build();
 
         var result = await DatabaseContext.AnyAsync(Collection, filter, cancellationToken);
@@ -32,47 +32,56 @@ public class ProjectRepository(DatabaseContext databaseContext, ILogger<ProjectR
         return result;
     }
 
-    public async Task<Result<long>> CountAsync(ProjectFilteringData filteringData, Guid userId,
+    public async Task<Result<long>> CountAsync(IssueFilteringData filteringData, Guid projectId, Guid userId,
         CancellationToken cancellationToken)
     {
-        var filter = new ProjectFilterBuilder()
+        var filter = new IssueFilterBuilder()
             .OwnedByUser(userId)
+            .ForProject(projectId)
+            .WithState(filteringData.State)
+            .WithPriorities(filteringData.Priorities)
             .SearchFor(filteringData.SearchTerm)
             .Build();
 
         return await DatabaseContext.CountAsync(Collection, filter, cancellationToken);
     }
 
-    public async Task<Result<Project>> CreateProjectAsync(CreateProjectExtendedCommand command,
+    public async Task<Result<Issue>> CreateIssueAsync(CreateIssueExtendedCommand command,
         CancellationToken cancellationToken)
     {
-        var project = Project.FromCommand(command);
-        var result = await DatabaseContext.CreateOneAsync(Collection, project, cancellationToken);
+        var issue = Issue.FromCommand(command);
+        var result = await DatabaseContext.CreateOneAsync(Collection, issue, cancellationToken);
         return result.Match(
-            _ => project,
-            exception => new Result<Project>(exception)
+            _ => issue,
+            exception => new Result<Issue>(exception)
         );
     }
 
-    public async Task<Option<Project>> GetProjectAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
+    public async Task<Option<Issue>> GetIssueAsync(Guid issueId, Guid projectId, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var filter = new ProjectFilterBuilder()
-            .WithId(projectId)
+        var filter = new IssueFilterBuilder()
+            .WithId(issueId)
             .OwnedByUser(userId)
+            .ForProject(projectId)
             .Build();
 
         return await DatabaseContext.GetOneAsync(Collection, filter, cancellationToken);
     }
 
-    public async Task<Option<IReadOnlyCollection<Project>>> GetProjectsAsync(ProjectFilteringData filteringData,
-        SortingData<ProjectSortBy> sortingData, PagingData pagingData, Guid userId, CancellationToken cancellationToken)
+    public async Task<Option<IReadOnlyCollection<Issue>>> GetIssuesAsync(IssueFilteringData filteringData,
+        SortingData<IssueSortBy> sortingData, PagingData pagingData, Guid projectId, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var filter = new ProjectFilterBuilder()
+        var filter = new IssueFilterBuilder()
             .OwnedByUser(userId)
+            .ForProject(projectId)
+            .WithState(filteringData.State)
+            .WithPriorities(filteringData.Priorities)
             .SearchFor(filteringData.SearchTerm)
             .Build();
 
-        var sort = new ProjectSortBuilder()
+        var sort = new IssueSortBuilder()
             .SortBy(sortingData)
             .Build();
 
@@ -80,15 +89,16 @@ public class ProjectRepository(DatabaseContext databaseContext, ILogger<ProjectR
             cancellationToken);
     }
 
-    public async Task<Result<Guid>> UpdateProjectAsync(UpdateProjectExtendedCommand command,
+    public async Task<Result<Guid>> UpdateIssueAsync(UpdateIssueExtendedCommand command,
         CancellationToken cancellationToken)
     {
-        var filter = new ProjectFilterBuilder()
-            .WithId(command.ProjectId)
+        var filter = new IssueFilterBuilder()
+            .WithId(command.IssueId)
             .OwnedByUser(command.UserId)
+            .ForProject(command.ProjectId)
             .Build();
 
-        var update = new ProjectUpdateBuilder()
+        var update = new IssueUpdateBuilder()
             .FromCommand(command)
             .UpdateModifiedOn()
             .Build();
@@ -96,22 +106,24 @@ public class ProjectRepository(DatabaseContext databaseContext, ILogger<ProjectR
         var result = await DatabaseContext.UpdateOneAsync(Collection, filter, update, cancellationToken);
 
         return result.Match(
-            count => command.ProjectId,
+            count => command.IssueId,
             exception => new Result<Guid>(exception)
         );
     }
 
-    public async Task<Result<Guid>> DeleteProjectAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> DeleteIssueAsync(Guid issueId, Guid projectId, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var filter = new ProjectFilterBuilder()
-            .WithId(projectId)
+        var filter = new IssueFilterBuilder()
+            .WithId(issueId)
             .OwnedByUser(userId)
+            .ForProject(projectId)
             .Build();
 
         var result = await DatabaseContext.DeleteOneAsync(Collection, filter, cancellationToken);
 
         return result.Match(
-            count => projectId,
+            count => issueId,
             exception => new Result<Guid>(exception)
         );
     }
