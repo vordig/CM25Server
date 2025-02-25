@@ -5,6 +5,7 @@ using CM25Server.Services.Contracts.Responses;
 using CM25Server.Services.Core;
 using CM25Server.WebApi.ApiVersioning;
 using CM25Server.WebApi.Data;
+using CM25Server.WebApi.Extensions;
 
 namespace CM25Server.WebApi.Endpoints;
 
@@ -70,7 +71,7 @@ public static class ProjectEndpoints
         CancellationToken cancellationToken)
     {
         var result = await projectService.AnyProjectAsync(authData.UserId, cancellationToken);
-        return result.Match(Results.Ok, Results.InternalServerError);
+        return result.ToOkResponse();
     }
 
     private static async Task<IResult> GetProjectsAsync(BindableProjectFilteringData filteringData,
@@ -79,34 +80,34 @@ public static class ProjectEndpoints
     {
         var result = await projectService.GetProjectsAsync(filteringData, sortingData, pagingData, authData.UserId,
             cancellationToken);
-        return result.Match(Results.Ok, Results.InternalServerError);
+        return result.ToOkResponse();
     }
 
     private static async Task<IResult> GetProjectAsync(Guid id, AuthData authData, ProjectService projectService,
         CancellationToken cancellationToken)
     {
         var result = await projectService.GetProjectAsync(id, authData.UserId, cancellationToken);
-        return result.Match(Results.Ok, Results.NotFound());
+        return result.ToOkResponse();
     }
 
     private static async Task<IResult> CreateProjectAsync(CreateProjectCommand command, AuthData authData,
         ProjectService projectService, CancellationToken cancellationToken)
     {
         var result = await projectService.CreateProjectAsync(command, authData.UserId, cancellationToken);
-        return result.Match(Results.Ok, Results.InternalServerError);
+        return result.ToOkResponse();
     }
 
     private static async Task<IResult> UpdateProjectAsync(Guid id, UpdateProjectCommand command, AuthData authData,
         ProjectService projectService, CancellationToken cancellationToken)
     {
         var result = await projectService.UpdateProjectAsync(id, command, authData.UserId, cancellationToken);
-        return result.Match(Results.Ok, Results.InternalServerError);
+        return result.ToOkResponse();
     }
 
     private static async Task<IResult> DeleteProjectAsync(Guid id, AuthData authData, ProjectService projectService,
         CancellationToken cancellationToken)
     {
         var result = await projectService.DeleteProjectAsync(id, authData.UserId, cancellationToken);
-        return result.Match(Results.Ok, Results.InternalServerError);
+        return result.ToOkResponse();
     }
 }

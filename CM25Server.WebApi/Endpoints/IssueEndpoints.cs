@@ -1,8 +1,8 @@
 using CM25Server.Domain.Models;
 using CM25Server.Services;
-using CM25Server.Services.Contracts;
 using CM25Server.Services.Contracts.Requests;
 using CM25Server.WebApi.ApiVersioning;
+using CM25Server.WebApi.Extensions;
 
 namespace CM25Server.WebApi.Endpoints;
 
@@ -67,70 +67,42 @@ public static class IssueEndpoints
     private static IResult GetIssuesAsync(Guid projectId, IssueService issueService, CancellationToken cancellationToken)
     {
         var result = issueService.GetIssues(projectId);
-
-        return result.Match(
-            Results.Ok,
-            _ => Results.NotFound()
-        );
+        return result.ToOkResponse();
     }
     
     private static IResult GetIssueAsync(Guid id, Guid projectId, IssueService issueService, CancellationToken cancellationToken)
     {
         var result = issueService.GetIssue(id, projectId);
-        
-        return result.Match(
-            Results.Ok,
-            Results.NotFound()
-        );
+        return result.ToOkResponse();
     }
     
     private static IResult CreateIssueAsync(Guid projectId, IssueRequest request, IssueService issueService, CancellationToken cancellationToken)
     {
         var result = issueService.CreateIssue(request, projectId);
-
-        return result.Match(
-            Results.Ok,
-            Results.InternalServerError
-        );
+        return result.ToOkResponse();
     }
     
     private static IResult UpdateIssueAsync(Guid id, Guid projectId, IssueRequest request, IssueService issueService, CancellationToken cancellationToken)
     {
         var result = issueService.UpdateIssue(id, request, projectId);
-
-        return result.Match(
-            Results.Ok,
-            Results.InternalServerError
-        );
+        return result.ToOkResponse();
     }
     
     private static IResult DeleteIssueAsync(Guid id, Guid projectId, IssueService issueService, CancellationToken cancellationToken)
     {
         var result = issueService.DeleteIssue(id, projectId);
-
-        return result.Match(
-            Results.Ok,
-            Results.InternalServerError
-        );
+        return result.ToOkResponse();
     }
     
     private static IResult GenerateIssuesAsync(int count, Guid projectId, IssueService issueService, CancellationToken cancellationToken)
     {
         var result = issueService.GenerateIssues(count, projectId);
-
-        return result.Match(
-            Results.Ok,
-            Results.InternalServerError
-        );
+        return result.ToOkResponse();
     }
     
     private static IResult ClearIssuesAsync(Guid projectId, IssueService issueService, CancellationToken cancellationToken)
     {
         var result = issueService.ClearIssues(projectId);
-
-        return result.Match(
-            Results.Ok,
-            Results.InternalServerError
-        );
+        return result.ToOkResponse();
     }
 }

@@ -171,16 +171,16 @@ internal static class OpenApiOptionsExtensions
             operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
             operation.Responses.TryAdd("403", new OpenApiResponse { Description = "Forbidden" });
 
-            var oAuthScheme = new OpenApiSecurityScheme
+            var bearerScheme = new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             };
 
             operation.Security = new List<OpenApiSecurityRequirement>
             {
                 new()
                 {
-                    [oAuthScheme] = scopes
+                    [bearerScheme] = scopes
                 }
             };
 
