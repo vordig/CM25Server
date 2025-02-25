@@ -17,11 +17,9 @@ public class ProjectService(ProjectRepository projectRepository, ILogger<Project
     public async Task<Result<ProjectResponse>> CreateProjectAsync(CreateProjectCommand command, Guid userId,
         CancellationToken cancellationToken)
     {
-        logger.LogInformation("CreateProjectAsync requested by {UserId}", userId);
-        
         // todo: add validator
         
-        var result = await projectRepository.CreateProjectAsync(command, cancellationToken);
+        var result = await projectRepository.CreateProjectAsync(command, userId, cancellationToken);
         return result.Match(
             createdProject =>
             {
@@ -41,9 +39,7 @@ public class ProjectService(ProjectRepository projectRepository, ILogger<Project
     public async Task<Option<ProjectResponse>> GetProjectAsync(Guid projectId, Guid userId,
         CancellationToken cancellationToken)
     {
-        logger.LogInformation("GetProjectAsync requested by {UserId}", userId);
-        
-        var projectResult = await projectRepository.GetProjectAsync(projectId, cancellationToken);
+        var projectResult = await projectRepository.GetProjectAsync(projectId, userId, cancellationToken);
 
         return projectResult.Match(
             project =>
@@ -58,10 +54,8 @@ public class ProjectService(ProjectRepository projectRepository, ILogger<Project
     public async Task<Result<PageResponse<ProjectResponse>>> GetProjectsAsync(ProjectFilteringData filteringData,
         SortingData<ProjectSortBy> sortingData, PagingData pagingData, Guid userId, CancellationToken cancellationToken)
     {
-        logger.LogInformation("GetProjectsAsync requested by {UserId}", userId);
-        
-        var itemsTask = projectRepository.GetProjectsAsync(filteringData, sortingData, pagingData, cancellationToken);
-        var itemsCountTask = projectRepository.CountAsync(filteringData, cancellationToken);
+        var itemsTask = projectRepository.GetProjectsAsync(filteringData, sortingData, pagingData, userId, cancellationToken);
+        var itemsCountTask = projectRepository.CountAsync(filteringData, userId, cancellationToken);
 
         await Task.WhenAll(itemsTask, itemsCountTask);
 
@@ -85,11 +79,9 @@ public class ProjectService(ProjectRepository projectRepository, ILogger<Project
     public async Task<Result<Guid>> UpdateProjectAsync(Guid projectId, UpdateProjectCommand command, Guid userId,
         CancellationToken cancellationToken)
     {
-        logger.LogInformation("UpdateProjectAsync requested by {UserId}", userId);
-        
         // todo: add validator
 
-        var result = await projectRepository.UpdateProjectAsync(projectId, command, cancellationToken);
+        var result = await projectRepository.UpdateProjectAsync(projectId, command, userId, cancellationToken);
         return result.Match(
             updatedProjectId =>
             {
@@ -106,15 +98,12 @@ public class ProjectService(ProjectRepository projectRepository, ILogger<Project
 
     public async Task<Result<bool>> AnyProjectAsync(Guid userId, CancellationToken cancellationToken)
     {
-        logger.LogInformation("AnyProjectAsync requested by {UserId}", userId);
-        return await projectRepository.AnyAsync(cancellationToken);
+        return await projectRepository.AnyAsync(userId, cancellationToken);
     }
 
     public async Task<Result<Guid>> DeleteProjectAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
     {
-        logger.LogInformation("DeleteProjectAsync requested by {UserId}", userId);
-        
-        var result = await projectRepository.DeleteProjectAsync(projectId, cancellationToken);
+        var result = await projectRepository.DeleteProjectAsync(projectId, userId, cancellationToken);
 
         return result.Match(
             updatedProjectId =>

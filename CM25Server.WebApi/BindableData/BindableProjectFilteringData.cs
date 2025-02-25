@@ -1,7 +1,7 @@
 using System.Reflection;
 using CM25Server.Infrastructure.Data;
 
-namespace CM25Server.WebApi.Data;
+namespace CM25Server.WebApi.BindableData;
 
 public record BindableProjectFilteringData(string? SearchTerm) : ProjectFilteringData(SearchTerm)
 {

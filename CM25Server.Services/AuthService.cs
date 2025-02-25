@@ -108,9 +108,9 @@ public class AuthService(UserRepository userRepository, IOptions<AuthOptions> au
 
         var claims = new ClaimsIdentity([
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Name, user.Username),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email)
+            new Claim("userId", user.Id.ToString()),
+            new Claim("username", user.Username),
+            new Claim("email", user.Email)
         ]);
 
         var tokenDescriptor = new SecurityTokenDescriptor
