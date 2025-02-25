@@ -1,4 +1,5 @@
 using CM25Server.Domain.Commands;
+using CM25Server.Domain.Commands.Mappers;
 using CM25Server.Domain.Core;
 
 namespace CM25Server.Domain.Models;
@@ -11,12 +12,7 @@ public class User : BaseModel
 
     public static User FromCommand(SignUpCommand command)
     {
-        var result = new User
-        {
-            Email = command.Email,
-            Username = command.Username,
-            Password = command.Password
-        };
-        return result;
+        var mapper = new SignUpCommandMapper();
+        return mapper.ToUser(command);
     }
 }
