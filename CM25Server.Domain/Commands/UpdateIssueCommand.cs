@@ -13,9 +13,9 @@ public record UpdateIssueCommand : BaseCommand<UpdateIssueCommand, UpdateIssueCo
     public IssuePriority? Priority { get; init; }
     public IssueState? State { get; init; }
     
-    public UpdateIssueExtendedCommand Extend(Guid issueId, Guid projectId, Guid userId)
+    public UpdateIssueExtendedCommand Extend(Guid issueId, Guid userId)
     {
         var mapper = new UpdateIssueCommandMapper();
-        return mapper.ToExtendedCommand(this, issueId, projectId, userId);
+        return mapper.ToExtendedCommand(this, issueId, userId);
     }
 }

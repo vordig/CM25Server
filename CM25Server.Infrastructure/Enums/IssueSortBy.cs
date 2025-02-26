@@ -3,7 +3,7 @@
 public enum IssueSortBy
 {
     Name,
-    Code,
+    ProjectCode,
     Priority,
     CreatedOn,
     ModifiedOn

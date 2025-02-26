@@ -8,6 +8,9 @@ public class CreateIssueCommandValidator : AbstractValidator<CreateIssueCommand>
     {
         RuleLevelCascadeMode = CascadeMode.Stop;
         
+        RuleFor(x => x.ProjectId)
+            .NotEmpty();
+        
         RuleFor(x => x.Name)
             .NotEmpty()
             .MaximumLength(128);

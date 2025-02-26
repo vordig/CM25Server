@@ -11,10 +11,12 @@ public record BindableIssueFilteringData : IssueFilteringData
         const string searchTermKey = "searchTerm";
         const string stateKey = "state";
         const string prioritiesKey = "priority";
+        const string projectIdsKey = "projectId";
 
         var searchTerm = context.Request.Query[searchTermKey];
         IssueState? state = null;
         List<IssuePriority>? priorities = null;
+        List<Guid>? projectIds = null;
         
         var stateQuery = context.Request.Query[stateKey];
         if (stateQuery.Count != 0)
@@ -33,6 +35,17 @@ public record BindableIssueFilteringData : IssueFilteringData
                 priorities.Add(issuePriority);
             }
         }
+        
+        var projectsQuery = context.Request.Query[projectIdsKey];
+        if (projectsQuery.Count != 0)
+        {
+            projectIds = [];
+            foreach (var projectId in projectsQuery)
+            {
+                if (Guid.TryParse(projectId, out var parsedProjectId))
+                    projectIds.Add(parsedProjectId);
+            }
+        }
 
         return ValueTask.FromResult<BindableIssueFilteringData?>(
             new BindableIssueFilteringData
@@ -40,6 +53,7 @@ public record BindableIssueFilteringData : IssueFilteringData
                 SearchTerm = searchTerm,
                 State = state,
                 Priorities = priorities,
+                ProjectIds = projectIds
             }
         );
     }
