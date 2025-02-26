@@ -17,7 +17,7 @@ public class IssueSortBuilder : BaseSortBuilder<Issue, IssueSortBuilder>,
         return sortBy switch
         {
             IssueSortBy.Name => x => x.Name,
-            IssueSortBy.Code => x => x.Code,
+            IssueSortBy.ProjectCode => x => x.ProjectCode,
             IssueSortBy.Priority => x => x.Priority,
             IssueSortBy.CreatedOn => x => x.Audit.CreatedOn,
             IssueSortBy.ModifiedOn => x => x.Audit.ModifiedOn,

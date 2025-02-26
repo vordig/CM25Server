@@ -12,14 +12,16 @@ public class IssueFilterBuilder : BaseFilterBuilder<Issue, IssueFilterBuilder>,
 {
     public IReadOnlyCollection<Expression<Func<Issue, object>>> SearchFields =>
     [
-        x => x.Code,
+        x => x.ProjectCode,
         x => x.Name,
         x => x.Description
     ];
     
-    public IssueFilterBuilder ForProject(Guid projectId)
+    public IssueFilterBuilder ForProjects(IReadOnlyCollection<Guid>? projectIds)
     {
-        var filter = Builder.Eq(x => x.ProjectId, projectId);
+        if (projectIds is null) return this;
+        
+        var filter = Builder.In(x => x.ProjectId, projectIds);
         AddFilter(filter);
         return this;
     }

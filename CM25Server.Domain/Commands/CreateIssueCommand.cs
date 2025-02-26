@@ -8,13 +8,14 @@ namespace CM25Server.Domain.Commands;
 
 public record CreateIssueCommand : BaseCommand<CreateIssueCommand, CreateIssueCommandValidator>
 {
+    public required Guid ProjectId { get; init; }
     public required string Name { get; init; }
     public string Description { get; init; } = string.Empty;
     public IssuePriority Priority { get; init; } = IssuePriority.Normal;
     
-    public CreateIssueExtendedCommand Extend(string code, Guid projectId, Guid userId)
+    public CreateIssueExtendedCommand Extend(string code, Guid userId)
     {
         var mapper = new CreateIssueCommandMapper();
-        return mapper.ToExtendedCommand(this, code, projectId, userId);
+        return mapper.ToExtendedCommand(this, code, userId);
     }
 }

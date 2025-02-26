@@ -8,8 +8,8 @@ namespace CM25Server.Domain.Models;
 public class Issue : BaseOwnedByUserModel
 {
     public Guid ProjectId { get; set; }
+    public string ProjectCode { get; set; } = string.Empty;
     public required string Name { get; set; }
-    public string Code { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public IssuePriority Priority { get; set; } = IssuePriority.Normal;
     public IssueState State { get; set; } = IssueState.Open;

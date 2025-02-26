@@ -8,6 +8,6 @@ namespace CM25Server.Domain.Commands.Mappers;
 public partial class CreateIssueCommandMapper
 {
     [MapValue(nameof(CreateIssueExtendedCommand.State), IssueState.Open)]
-    public partial CreateIssueExtendedCommand ToExtendedCommand(CreateIssueCommand command, string code, Guid projectId,
+    public partial CreateIssueExtendedCommand ToExtendedCommand(CreateIssueCommand command, string projectCode,
         Guid userId);
 }

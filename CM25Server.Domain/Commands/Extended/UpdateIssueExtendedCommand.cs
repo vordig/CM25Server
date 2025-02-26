@@ -3,6 +3,5 @@
 public record UpdateIssueExtendedCommand : UpdateIssueCommand
 {
     public required Guid UserId { get; init; }
-    public required Guid ProjectId { get; init; }
     public required Guid IssueId { get; init; }
 }

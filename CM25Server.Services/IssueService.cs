@@ -19,21 +19,21 @@ public class IssueService(
     IssueRepository issueRepository,
     ILogger<IssueService> logger)
 {
-    public async Task<Result<IssueListResponse>> CreateIssueAsync(CreateIssueCommand command, Guid projectId,
-        Guid userId, CancellationToken cancellationToken)
+    public async Task<Result<IssueListResponse>> CreateIssueAsync(CreateIssueCommand command, Guid userId,
+        CancellationToken cancellationToken)
     {
         var commandValidationResult = await command.ValidateAsync(cancellationToken);
         return await commandValidationResult.Match(
             async validatedCommand =>
-                await ValidatedCreateIssueAsync(validatedCommand, projectId, userId, cancellationToken),
+                await ValidatedCreateIssueAsync(validatedCommand, userId, cancellationToken),
             exception => Task.FromResult(new Result<IssueListResponse>(exception))
         );
     }
 
-    public async Task<Option<IssueDetailResponse>> GetIssueAsync(Guid issueId, Guid projectId, Guid userId,
+    public async Task<Option<IssueDetailResponse>> GetIssueAsync(Guid issueId, Guid userId,
         CancellationToken cancellationToken)
     {
-        var issueResult = await issueRepository.GetIssueAsync(issueId, projectId, userId, cancellationToken);
+        var issueResult = await issueRepository.GetIssueAsync(issueId, userId, cancellationToken);
 
         return issueResult.Match(
             issue =>
@@ -45,13 +45,16 @@ public class IssueService(
         );
     }
 
+    public async Task<Result<long>> CountIssuesAsync(IssueFilteringData filteringData, Guid userId,
+        CancellationToken cancellationToken) =>
+        await issueRepository.CountAsync(filteringData, userId, cancellationToken);
+
     public async Task<Result<PageResponse<IssueListResponse>>> GetIssuesAsync(IssueFilteringData filteringData,
-        SortingData<IssueSortBy> sortingData, PagingData pagingData, Guid projectId, Guid userId,
-        CancellationToken cancellationToken)
+        SortingData<IssueSortBy> sortingData, PagingData pagingData, Guid userId, CancellationToken cancellationToken)
     {
-        var itemsTask = issueRepository.GetIssuesAsync(filteringData, sortingData, pagingData, projectId, userId,
+        var itemsTask = issueRepository.GetIssuesAsync(filteringData, sortingData, pagingData, userId,
             cancellationToken);
-        var itemsCountTask = issueRepository.CountAsync(filteringData, projectId, userId, cancellationToken);
+        var itemsCountTask = issueRepository.CountAsync(filteringData, userId, cancellationToken);
 
         await Task.WhenAll(itemsTask, itemsCountTask);
 
@@ -72,26 +75,20 @@ public class IssueService(
         return result;
     }
 
-    public async Task<Result<Guid>> UpdateIssueAsync(Guid issueId, UpdateIssueCommand command, Guid projectId,
-        Guid userId, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> UpdateIssueAsync(Guid issueId, UpdateIssueCommand command, Guid userId,
+        CancellationToken cancellationToken)
     {
         var commandValidationResult = await command.ValidateAsync(cancellationToken);
         return await commandValidationResult.Match(
             async validatedCommand =>
-                await ValidatedUpdateIssueAsync(issueId, validatedCommand, projectId, userId, cancellationToken),
+                await ValidatedUpdateIssueAsync(issueId, validatedCommand, userId, cancellationToken),
             exception => Task.FromResult(new Result<Guid>(exception))
         );
     }
 
-    public async Task<Result<bool>> AnyIssueAsync(Guid projectId, Guid userId, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> DeleteIssueAsync(Guid issueId, Guid userId, CancellationToken cancellationToken)
     {
-        return await issueRepository.AnyAsync(projectId, userId, cancellationToken);
-    }
-
-    public async Task<Result<Guid>> DeleteIssueAsync(Guid issueId, Guid projectId, Guid userId,
-        CancellationToken cancellationToken)
-    {
-        var result = await issueRepository.DeleteIssueAsync(issueId, projectId, userId, cancellationToken);
+        var result = await issueRepository.DeleteIssueAsync(issueId, userId, cancellationToken);
 
         return result.Match(
             updatedIssueId =>
@@ -107,14 +104,14 @@ public class IssueService(
         );
     }
 
-    private async Task<Result<IssueListResponse>> ValidatedCreateIssueAsync(CreateIssueCommand command, Guid projectId,
-        Guid userId, CancellationToken cancellationToken)
+    private async Task<Result<IssueListResponse>> ValidatedCreateIssueAsync(CreateIssueCommand command, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var projectResult = await projectRepository.GetProjectAsync(projectId, userId, cancellationToken);
+        var projectResult = await projectRepository.GetProjectAsync(command.ProjectId, userId, cancellationToken);
         return await projectResult.MatchAsync(async project =>
             {
                 var code = project.Code;
-                var extendedCommand = command.Extend(code, projectId, userId);
+                var extendedCommand = command.Extend(code, userId);
                 return await CreateIssueAsync(extendedCommand, cancellationToken);
             },
             () => new Result<IssueListResponse>(new ProblemException("Project not found", "Project not found"))
@@ -141,10 +138,10 @@ public class IssueService(
         );
     }
 
-    private async Task<Result<Guid>> ValidatedUpdateIssueAsync(Guid issueId, UpdateIssueCommand command,
-        Guid projectId, Guid userId, CancellationToken cancellationToken)
+    private async Task<Result<Guid>> ValidatedUpdateIssueAsync(Guid issueId, UpdateIssueCommand command, Guid userId,
+        CancellationToken cancellationToken)
     {
-        var extendedCommand = command.Extend(issueId, projectId, userId);
+        var extendedCommand = command.Extend(issueId, userId);
         var result = await issueRepository.UpdateIssueAsync(extendedCommand, cancellationToken);
         return result.Match(
             updatedIssueId =>
