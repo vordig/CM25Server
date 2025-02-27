@@ -82,16 +82,16 @@ static void RunApplication(string[] args)
         options.RequireHttpsMetadata = false; // enable for https
         options.SaveToken = false;
 
-        var key = Encoding.ASCII.GetBytes(authOptions.JWTSecret ?? throw new InvalidOperationException());
+        var key = Encoding.ASCII.GetBytes(authOptions.AccessTokenSecret ?? throw new InvalidOperationException());
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key),
             ValidateIssuer = true,
-            ValidIssuer = authOptions.JWTIssuer,
+            ValidIssuer = authOptions.AccessTokenIssuer,
             ValidateAudience = true,
-            ValidAudience = authOptions.JWTAudience,
+            ValidAudience = authOptions.AccessTokenAudience,
             ClockSkew = TimeSpan.Zero
         };
     });

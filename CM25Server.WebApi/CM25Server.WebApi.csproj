@@ -11,7 +11,7 @@
         <ContainerFamily>alpine</ContainerFamily>
         <ContainerRegistry>docker.io</ContainerRegistry>
         <ContainerRepository>vordi/cm25-server</ContainerRepository>
-        <ContainerImageTags>0.3.0;latest</ContainerImageTags>
+        <ContainerImageTags>0.4.0;latest</ContainerImageTags>
     </PropertyGroup>
 
     <ItemGroup>

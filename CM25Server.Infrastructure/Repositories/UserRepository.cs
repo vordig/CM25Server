@@ -2,6 +2,7 @@ using CM25Server.Domain.Commands;
 using CM25Server.Domain.Models;
 using CM25Server.Infrastructure.Builders.Filter;
 using CM25Server.Infrastructure.Core;
+using CM25Server.Infrastructure.Core.Builders.Filter.Extensions;
 using CM25Server.Infrastructure.Core.Repositories;
 using LanguageExt;
 using LanguageExt.Common;
@@ -37,6 +38,15 @@ public class UserRepository(DatabaseContext databaseContext, ILogger<UserReposit
     {
         var filter = new UserFilterBuilder()
             .WithEmail(email)
+            .Build();
+
+        return await DatabaseContext.GetOneAsync(Collection, filter, cancellationToken);
+    }
+    
+    public async Task<Option<User>> GetUserAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var filter = new UserFilterBuilder()
+            .WithId(userId)
             .Build();
 
         return await DatabaseContext.GetOneAsync(Collection, filter, cancellationToken);
