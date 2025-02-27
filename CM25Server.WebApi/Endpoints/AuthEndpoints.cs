@@ -10,6 +10,7 @@ public static class AuthEndpoints
 {
     private const string SignInEndpointName = "Sign In";
     private const string SignUpEndpointName = "Sign Up";
+    private const string RefreshEndpointName = "Refresh";
 
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder endpoints,
         ApiVersionManager apiVersionManager)
@@ -32,6 +33,11 @@ public static class AuthEndpoints
             .MapPost("sign-up", SignUpAsync)
             .WithName(SignUpEndpointName)
             .Produces<AuthResponse>();
+        
+        api
+            .MapPost("refresh", RefreshAsync)
+            .WithName(RefreshEndpointName)
+            .Produces<AuthResponse>();
     }
 
     private static async Task<IResult> SignInAsync(SignInCommand command, AuthService authService,
@@ -45,6 +51,13 @@ public static class AuthEndpoints
         CancellationToken cancellationToken)
     {
         var result = await authService.SignUpAsync(command, cancellationToken);
+        return result.ToOkResponse();
+    }
+    
+    private static async Task<IResult> RefreshAsync(RefreshCommand command, AuthService authService,
+        CancellationToken cancellationToken)
+    {
+        var result = await authService.RefreshAsync(command, cancellationToken);
         return result.ToOkResponse();
     }
 }
