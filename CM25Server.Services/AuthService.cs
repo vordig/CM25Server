@@ -15,7 +15,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CM25Server.Services;
 
-public class AuthService(UserRepository userRepository, IOptions<AuthOptions> authOptions, ILogger<AuthService> logger)
+public class AuthService(
+    UserRepository userRepository,
+    RefreshTokenRepository refreshTokenRepository,
+    IOptions<AuthOptions> authOptions,
+    ILogger<AuthService> logger)
 {
     private readonly AuthOptions _authOptions = authOptions.Value;
 
@@ -39,18 +43,39 @@ public class AuthService(UserRepository userRepository, IOptions<AuthOptions> au
 
     public async Task<Result<AuthResponse>> RefreshAsync(RefreshCommand command, CancellationToken cancellationToken)
     {
-        var decodeRefreshTokenResult = DecodeRefreshToken(command.Token);
+        var decodeRefreshTokenResult = DecodeRefreshToken(command.RefreshToken);
         return await decodeRefreshTokenResult.Match(
-            async userId =>
+            async refreshTokenId => await RefreshByRefreshTokenIdAsync(refreshTokenId, cancellationToken),
+            exception => Task.FromResult(new Result<AuthResponse>(exception))
+        );
+    }
+
+    private async Task<Result<AuthResponse>> RefreshByRefreshTokenIdAsync(Guid refreshTokenId,
+        CancellationToken cancellationToken)
+    {
+        var refreshTokenResult = await refreshTokenRepository.GetRefreshTokenAsync(refreshTokenId, cancellationToken);
+        return await refreshTokenResult.MatchAsync(
+            async refreshToken =>
             {
-                var existingUserResult = await userRepository.GetUserAsync(userId, cancellationToken);
-                return existingUserResult.Match(
-                    existingUser => EncodeAuthResponse(existingUser),
-                    () => new Result<AuthResponse>(new ProblemException("Authorization refresh failed",
-                        "Incorrect user"))
+                var refreshTokenDeletionResult =
+                    await refreshTokenRepository.DeleteRefreshTokenAsync(refreshToken.Id, cancellationToken);
+                return await refreshTokenDeletionResult.Match(
+                    async _ => await RefreshByUserIdAsync(refreshToken.UserId, cancellationToken),
+                    exception => Task.FromResult(new Result<AuthResponse>(exception))
                 );
             },
-            exception => Task.FromResult(new Result<AuthResponse>(exception))
+            () => new Result<AuthResponse>(new ProblemException("Authorization refresh failed",
+                "Incorrect refresh token"))
+        );
+    }
+
+    private async Task<Result<AuthResponse>> RefreshByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var existingUserResult = await userRepository.GetUserAsync(userId, cancellationToken);
+        return await existingUserResult.MatchAsync(
+            async existingUser => await AuthorizeUserAsync(existingUser, cancellationToken),
+            () => new Result<AuthResponse>(new ProblemException("Authorization refresh failed",
+                "Incorrect user"))
         );
     }
 
@@ -58,23 +83,30 @@ public class AuthService(UserRepository userRepository, IOptions<AuthOptions> au
         CancellationToken cancellationToken)
     {
         var existingUserResult = await userRepository.GetUserAsync(command.Email, cancellationToken);
-        return existingUserResult.Match(
-            existingUser =>
+        return await existingUserResult.MatchAsync(
+            async existingUser =>
             {
                 var passwordHasher = new PasswordHasher<SignInCommand>();
                 var verificationResult =
                     passwordHasher.VerifyHashedPassword(command, existingUser.Password, command.Password);
 
-                return verificationResult switch
-                {
-                    PasswordVerificationResult.Failed => new Result<AuthResponse>(
-                        new ProblemException("Authorization failed", "Incorrect credentials")),
-                    PasswordVerificationResult.Success => EncodeAuthResponse(existingUser),
-                    PasswordVerificationResult.SuccessRehashNeeded => EncodeAuthResponse(existingUser),
-                    _ => new Result<AuthResponse>(new ArgumentOutOfRangeException())
-                };
+                if (verificationResult == PasswordVerificationResult.Failed)
+                    return new Result<AuthResponse>(
+                        new ProblemException("Authorization failed", "Incorrect credentials"));
+
+                return await AuthorizeUserAsync(existingUser, cancellationToken);
             },
             () => new Result<AuthResponse>(new ProblemException("Authorization failed", "Incorrect credentials"))
+        );
+    }
+
+    private async Task<Result<AuthResponse>> AuthorizeUserAsync(User user, CancellationToken cancellationToken)
+    {
+        var refreshTokenCreationResult =
+            await refreshTokenRepository.CreateRefreshTokenAsync(user.Id, cancellationToken);
+        return refreshTokenCreationResult.Match(
+            refreshToken => EncodeAuthResponse(user, refreshToken),
+            exception => new Result<AuthResponse>(exception)
         );
     }
 
@@ -103,18 +135,18 @@ public class AuthService(UserRepository userRepository, IOptions<AuthOptions> au
 
         var userCreationResult = await userRepository.CreateUserAsync(command, cancellationToken);
 
-        return userCreationResult.Match(
-            createdUser => EncodeAuthResponse(createdUser),
-            exception => new Result<AuthResponse>(exception)
+        return await userCreationResult.Match(
+            async createdUser => await AuthorizeUserAsync(createdUser, cancellationToken),
+            exception => Task.FromResult(new Result<AuthResponse>(exception))
         );
     }
 
-    private AuthResponse EncodeAuthResponse(User user)
+    private AuthResponse EncodeAuthResponse(User user, RefreshToken refreshToken)
     {
         return new AuthResponse
         {
             AccessToken = EncodeAccessToken(user),
-            RefreshToken = EncodeRefreshToken(user),
+            RefreshToken = EncodeRefreshToken(refreshToken),
         };
     }
 
@@ -125,17 +157,28 @@ public class AuthService(UserRepository userRepository, IOptions<AuthOptions> au
         var audience = _authOptions.AccessTokenAudience;
         var expires = DateTime.UtcNow.AddMinutes(_authOptions.AccessTokenTimeToLive);
 
-        return EncodeToken(user, key, issuer, audience, expires);
+        var claims = new ClaimsIdentity([
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("userId", user.Id.ToString()),
+            new Claim("username", user.Username),
+            new Claim("email", user.Email)
+        ]);
+
+        return EncodeToken(claims, key, issuer, audience, expires);
     }
 
-    private string EncodeRefreshToken(User user)
+    private string EncodeRefreshToken(RefreshToken refreshToken)
     {
         var key = Encoding.UTF8.GetBytes(_authOptions.RefreshTokenSecret);
         var issuer = _authOptions.RefreshTokenIssuer;
         var audience = _authOptions.RefreshTokenAudience;
         var expires = DateTime.UtcNow.AddDays(_authOptions.RefreshTokenTimeToLive);
 
-        return EncodeToken(user, key, issuer, audience, expires);
+        var claims = new ClaimsIdentity([
+            new Claim(JwtRegisteredClaimNames.Jti, refreshToken.Id.ToString())
+        ]);
+
+        return EncodeToken(claims, key, issuer, audience, expires);
     }
 
     private Result<Guid> DecodeRefreshToken(string refreshToken)
@@ -161,29 +204,23 @@ public class AuthService(UserRepository userRepository, IOptions<AuthOptions> au
         try
         {
             var principal = validator.ValidateToken(refreshToken, validationParameters, out _);
-            if (!Guid.TryParse(principal.Identities.First().Claims.First(x => x.Type == "userId").Value,
-                    out var userId))
+            if (!Guid.TryParse(
+                    principal.Identities.First().Claims.First(x => x.Type == JwtRegisteredClaimNames.Jti).Value,
+                    out var refreshTokenId))
                 return new Result<Guid>(new ProblemException("Authorization refresh failed",
-                    "Can't get userId from refresh token"));
-            return userId;
+                    "Can't get Jti from refresh token"));
+            return refreshTokenId;
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            return new Result<Guid>(new ProblemException("Authorization refresh failed",
-                "Refresh token is not valid"));
+            return new Result<Guid>(exception);
         }
     }
 
-    private static string EncodeToken(User user, byte[] key, string issuer, string audience, DateTime expires)
+    private static string EncodeToken(ClaimsIdentity claims, byte[] key, string issuer, string audience,
+        DateTime expires)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-
-        var claims = new ClaimsIdentity([
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim("userId", user.Id.ToString()),
-            new Claim("username", user.Username),
-            new Claim("email", user.Email)
-        ]);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
