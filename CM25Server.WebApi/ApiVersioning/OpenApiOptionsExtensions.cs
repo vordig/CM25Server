@@ -22,7 +22,7 @@ internal static class OpenApiOptionsExtensions
             var versionedDescriptionProvider = context.ApplicationServices.GetService<IApiVersionDescriptionProvider>();
             var apiDescription = versionedDescriptionProvider?.ApiVersionDescriptions
                 .SingleOrDefault(description => description.GroupName == context.DocumentName);
-            if (apiDescription is null)
+            if (apiDescription is null || versionedDescriptionProvider is null)
             {
                 return Task.CompletedTask;
             }
