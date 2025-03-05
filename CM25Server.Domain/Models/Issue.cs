@@ -13,6 +13,7 @@ public class Issue : BaseOwnedByUserModel
     public string Description { get; set; } = string.Empty;
     public IssuePriority Priority { get; set; } = IssuePriority.Normal;
     public IssueState State { get; set; } = IssueState.Open;
+    public IssueStage Stage { get; set; } = IssueStage.Backlog;
     
     public static Issue FromCommand(CreateIssueExtendedCommand command)
     {

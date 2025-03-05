@@ -158,7 +158,7 @@ public class AuthService(
         var expires = DateTime.UtcNow.AddMinutes(_authOptions.AccessTokenTimeToLive);
 
         var claims = new ClaimsIdentity([
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
             new Claim("userId", user.Id.ToString()),
             new Claim("username", user.Username),
             new Claim("email", user.Email)
