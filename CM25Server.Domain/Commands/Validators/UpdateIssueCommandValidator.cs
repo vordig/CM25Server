@@ -13,5 +13,13 @@ public class UpdateIssueCommandValidator : AbstractValidator<UpdateIssueCommand>
         
         RuleFor(x => x.Description)
             .MaximumLength(1000);
+
+        RuleFor(x => x.State)
+            .Null()
+            .When(x => x.Stage is not null);
+        
+        RuleFor(x => x.Stage)
+            .Null()
+            .When(x => x.State is not null);
     }
 }

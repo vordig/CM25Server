@@ -11,6 +11,7 @@ public record IssueDetailResponse
     public required string Description { get; init; }
     public required IssuePriority Priority { get; init; }
     public required IssueState State { get; init; }
+    public required IssueStage Stage { get; init; }
     public required DateTime CreatedOn { get; init; }
     public required DateTime ModifiedOn { get; init; }
 }

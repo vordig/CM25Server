@@ -12,6 +12,7 @@ public record UpdateIssueCommand : BaseCommand<UpdateIssueCommand, UpdateIssueCo
     public string? Description { get; init; }
     public IssuePriority? Priority { get; init; }
     public IssueState? State { get; init; }
+    public IssueStage? Stage { get; init; }
     
     public UpdateIssueExtendedCommand Extend(Guid issueId, Guid userId)
     {
